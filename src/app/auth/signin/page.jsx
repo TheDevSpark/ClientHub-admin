@@ -29,7 +29,7 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 ">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm">
         {/* Logo / Icon */}
         <div className="flex justify-center mb-6">

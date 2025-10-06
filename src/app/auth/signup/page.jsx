@@ -52,10 +52,10 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 py-10">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm">
         {/* Logo / Icon */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center ">
           <div className="bg-indigo-500 text-white p-4 rounded-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
