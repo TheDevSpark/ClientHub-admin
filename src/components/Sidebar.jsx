@@ -18,7 +18,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex md:w-56 lg:w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:sticky md:top-0 md:h-screen">
       <div className="h-16 flex items-center px-4 border-b border-gray-200">
-        <div className="flex items-center gap-2 text-lg font-semibold"><span>🧳</span> ClientHub</div>
+        <div className="flex items-center gap-2 text-lg font-semibold text-black"><span>🧳</span> ClientHub</div>
       </div>
       <nav className="p-3 space-y-1">
         {nav.map((item) => {

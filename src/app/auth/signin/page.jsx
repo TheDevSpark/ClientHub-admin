@@ -87,7 +87,7 @@ export default function SigninPage() {
         </div>
 
         {/* Heading */}
-        <h2 className="text-center text-2xl font-semibold mb-2">
+        <h2 className="text-center text-2xl font-semibold mb-2 text-black">
           Welcome back
         </h2>
         <p className="text-center text-gray-500 mb-6">
@@ -108,7 +108,7 @@ export default function SigninPage() {
               id="email"
               type="email"
               placeholder="you@example.com"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
               value={email}
               onChange={handleEmailChange}
               required
@@ -127,7 +127,7 @@ export default function SigninPage() {
               id="password"
               type="password"
               placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
               value={password}
               onChange={handlePasswordChange}
               required
@@ -173,14 +173,14 @@ export default function SigninPage() {
             <button
               type="button"
               onClick={handleAdminDemo}
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50"
+              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50 text-black"
             >
               Admin Demo
             </button>
             <button
               type="button"
               onClick={handleClientDemo}
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50"
+              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50 text-black"
             >
               Client Demo
             </button>
