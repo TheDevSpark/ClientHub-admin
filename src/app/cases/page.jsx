@@ -62,8 +62,8 @@ export default function CasesPage() {
                   <div className="text-xs text-gray-500">{filtered.length} cases found</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Search cases..." />
-                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black" placeholder="Search cases..." />
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black">
                     <option>All</option>
                     <option>In Progress</option>
                     <option>Completed</option>

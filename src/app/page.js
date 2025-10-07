@@ -13,7 +13,7 @@ export default function Home() {
       const { data } = await supabase.auth.getSession();
       const session = data?.session || null;
       if (!session) {
-        router.replace("/auth/signup");
+        router.replace("/auth/signin");
         return;
       }
       const user = session.user;
