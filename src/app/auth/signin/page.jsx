@@ -20,6 +20,40 @@ export default function SigninPage() {
     else router.push("/dashboard");
   };
 
+  const handleAdminDemo = async () => {
+    setError("");
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("demo_admin", "1");
+      }
+    } catch (_) {}
+    // Bypass auth entirely for demo and go straight to dashboard
+    router.push("/dashboard");
+  };
+
+  const handleClientDemo = async () => {
+    const demoEmail = process.env.NEXT_PUBLIC_DEMO_CLIENT_EMAIL;
+    const demoPassword = process.env.NEXT_PUBLIC_DEMO_CLIENT_PASSWORD;
+    if (!demoEmail || !demoPassword) {
+      setError("Demo client credentials are not configured.");
+      return;
+    }
+    setError("");
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("demo_admin");
+      }
+    } catch (_) {}
+    const { error } = await supabase.auth.signInWithPassword({
+      email: demoEmail,
+      password: demoPassword,
+    });
+    if (error) setError(error.message);
+    else router.replace("/auth/signin");
+  };
+
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
@@ -29,7 +63,7 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 ">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white sm:bg-gray-50 ">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm">
         {/* Logo / Icon */}
         <div className="flex justify-center mb-6">
@@ -117,12 +151,40 @@ export default function SigninPage() {
         {/* Error */}
         {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
 
-        {/* Footer */}
-        <div className="mt-6 text-center text-gray-600 text-sm">
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-6">
+          <div className="h-px bg-gray-200 flex-1" />
+          <span className="text-xs text-gray-400">or</span>
+          <div className="h-px bg-gray-200 flex-1" />
+        </div>
+
+        {/* Sign up link */}
+        <div className="text-center text-gray-600 text-sm">
           Don&apos;t have an account?{" "}
           <a href="/auth/signup" className="text-indigo-600 hover:underline">
             Sign up
           </a>
+        </div>
+
+        {/* Quick demo access */}
+        <div className="mt-6">
+          <div className="text-center text-sm text-gray-500 mb-3">Quick demo access:</div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleAdminDemo}
+              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              Admin Demo
+            </button>
+            <button
+              type="button"
+              onClick={handleClientDemo}
+              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              Client Demo
+            </button>
+          </div>
         </div>
       </div>
     </div>
