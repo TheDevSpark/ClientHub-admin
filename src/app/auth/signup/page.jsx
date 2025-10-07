@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../../lib/supabaseClinet";
+import { supabase } from "../../../../lib/supabaseClient";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -28,7 +28,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${location.origin}/auth/signin`, // After email verify redirect
+        emailRedirectTo: `${location.origin}/auth/signin`,
         data: {
           full_name: name,
           phone_number: phone,
