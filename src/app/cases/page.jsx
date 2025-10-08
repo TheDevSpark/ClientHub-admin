@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../../lib/supabaseClient";
 
 function StatusBadge({ status }) {
   const cls =
@@ -19,26 +20,61 @@ function StatusBadge({ status }) {
 export default function CasesPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [cases, setCases] = useState([]);
 
-  const cases = useMemo(
-    () => [
-      { id: "#0001", client: "Sarah Johnson", type: "Contract Review", status: "In Progress", created: "9/15/2024", updated: "10/3/2024" },
-      { id: "#0002", client: "Sarah Johnson", type: "Property Dispute", status: "Completed", created: "8/10/2024", updated: "9/28/2024" },
-      { id: "#0003", client: "Michael Chen", type: "Business Formation", status: "Pending", created: "9/28/2024", updated: "10/1/2024" },
-      { id: "#0004", client: "Emily Rodriguez", type: "Estate Planning", status: "In Progress", created: "9/5/2024", updated: "10/2/2024" },
-      { id: "#0005", client: "Emily Rodriguez", type: "Immigration Consultation", status: "Completed", created: "8/20/2024", updated: "9/15/2024" },
-      { id: "#0006", client: "James Wilson", type: "Divorce Proceedings", status: "In Progress", created: "9/10/2024", updated: "10/4/2024" },
-      { id: "#0007", client: "Amanda Park", type: "Trademark Registration", status: "Completed", created: "7/15/2024", updated: "9/30/2024" },
-    ],
-    []
-  );
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      setLoading(true);
+      setError("");
+      // Fetch profiles to map client names
+      const profilesPromise = supabase
+        .from("profiles")
+        .select("id, full_name");
+      // Fetch cases
+      const casesPromise = supabase
+        .from("cases")
+        .select('id, created_at, "case-name", "case-description", "case-type", status, "case-id"')
+        .order("created_at", { ascending: false });
+
+      const [{ data: profilesData, error: profilesError }, { data: casesData, error: casesError }] = await Promise.all([
+        profilesPromise,
+        casesPromise,
+      ]);
+
+      if (!isMounted) return;
+      if (profilesError || casesError) {
+        setError((profilesError || casesError)?.message || "Failed to load cases");
+        setLoading(false);
+        return;
+      }
+
+      const idToName = new Map((profilesData || []).map((p) => [p.id, p.full_name]));
+      const normalized = (casesData || []).map((c) => ({
+        id: c.id,
+        client: idToName.get(c["case-id"]) || "Unknown",
+        type: c["case-type"] || "",
+        status: c.status || "",
+        created: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+        updated: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+      }));
+      setCases(normalized);
+      setLoading(false);
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filtered = cases.filter((c) => {
     const q = query.toLowerCase();
-    const matchesQuery =
-      c.id.toLowerCase().includes(q) ||
-      c.client.toLowerCase().includes(q) ||
-      c.type.toLowerCase().includes(q);
+    const idStr = String(c.id || "").toLowerCase();
+    const clientStr = String(c.client || "").toLowerCase();
+    const typeStr = String(c.type || "").toLowerCase();
+    const matchesQuery = idStr.includes(q) || clientStr.includes(q) || typeStr.includes(q);
     const matchesStatus = statusFilter === "All" ? true : c.status === statusFilter;
     return matchesQuery && matchesStatus;
   });
@@ -87,9 +123,17 @@ export default function CasesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filtered.map((c, idx) => (
+                    {loading ? (
+                      <tr>
+                        <td className="px-5 py-6 text-muted-foreground" colSpan={7}>Loading…</td>
+                      </tr>
+                    ) : error ? (
+                      <tr>
+                        <td className="px-5 py-6 text-red-600" colSpan={7}>{error}</td>
+                      </tr>
+                    ) : filtered.map((c, idx) => (
                       <tr key={idx} className="hover:bg-muted/50">
-                        <td className="px-5 py-3 text-foreground">{c.id}</td>
+                        <td className="px-5 py-3 text-foreground">#{String(c.id).padStart(4, "0")}</td>
                         <td className="px-5 py-3 text-foreground">{c.client}</td>
                         <td className="px-5 py-3 text-muted-foreground">{c.type}</td>
                         <td className="px-5 py-3"><StatusBadge status={c.status} /></td>

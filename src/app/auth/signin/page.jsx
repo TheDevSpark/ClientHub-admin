@@ -108,7 +108,7 @@ export default function SigninPage() {
               id="email"
               type="email"
               placeholder="you@example.com"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black bg-white placeholder-gray-400 dark:bg-white dark:text-black dark:placeholder-gray-400"
               value={email}
               onChange={handleEmailChange}
               required
@@ -127,7 +127,7 @@ export default function SigninPage() {
               id="password"
               type="password"
               placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black bg-white placeholder-gray-400 dark:bg-white dark:text-black dark:placeholder-gray-400"
               value={password}
               onChange={handlePasswordChange}
               required

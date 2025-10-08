@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../../lib/supabaseClient";
 
 function Avatar({ name }) {
   const initials = name
@@ -18,17 +19,44 @@ function Avatar({ name }) {
 
 export default function ClientsPage() {
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [clients, setClients] = useState([]);
 
-  const clients = useMemo(
-    () => [
-      { name: "Sarah Johnson", email: "sarah.j@email.com", phone: "(555) 123-4567", cases: 3, joined: "1/15/2024" },
-      { name: "Michael Chen", email: "michael.c@email.com", phone: "(555) 234-5678", cases: 1, joined: "2/20/2024" },
-      { name: "Emily Rodriguez", email: "emily.r@email.com", phone: "(555) 345-6789", cases: 2, joined: "3/10/2024" },
-      { name: "James Wilson", email: "james.w@email.com", phone: "(555) 456-7890", cases: 1, joined: "3/25/2024" },
-      { name: "Amanda Park", email: "amanda.p@email.com", phone: "(555) 567-8901", cases: 4, joined: "2/5/2024" },
-    ],
-    []
-  );
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      setLoading(true);
+      setError("");
+      const [{ data: profiles, error: pErr }, { data: cases, error: cErr }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, role"),
+        supabase.from("cases").select('id, "case-id"'),
+      ]);
+      if (!isMounted) return;
+      if (pErr || cErr) {
+        setError((pErr || cErr)?.message || "Failed to load clients");
+        setLoading(false);
+        return;
+      }
+      const counts = new Map();
+      (cases || []).forEach((k) => {
+        const pid = k["case-id"]; counts.set(pid, (counts.get(pid) || 0) + 1);
+      });
+      const normalized = (profiles || []).map((p) => ({
+        id: p.id,
+        name: p.full_name || "Unnamed",
+        email: "",
+        phone: "",
+        role: p.role || "",
+        cases: counts.get(p.id) || 0,
+        joined: "",
+      }));
+      setClients(normalized);
+      setLoading(false);
+    }
+    load();
+    return () => { isMounted = false; };
+  }, []);
 
   const filtered = clients.filter(
     (c) =>
@@ -74,7 +102,15 @@ export default function ClientsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filtered.map((c, idx) => (
+                    {loading ? (
+                      <tr>
+                        <td className="px-5 py-6 text-muted-foreground" colSpan={6}>Loading…</td>
+                      </tr>
+                    ) : error ? (
+                      <tr>
+                        <td className="px-5 py-6 text-red-600" colSpan={6}>{error}</td>
+                      </tr>
+                    ) : filtered.map((c, idx) => (
                       <tr key={idx} className="hover:bg-muted/50">
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
@@ -97,7 +133,7 @@ export default function ClientsPage() {
                         <td className="px-5 py-3">
                           <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted text-muted-foreground text-xs font-medium">{c.cases}</span>
                         </td>
-                        <td className="px-5 py-3 text-muted-foreground">{c.joined}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{c.joined || "—"}</td>
                         <td className="px-5 py-3">
                           <button className="text-primary hover:underline">View</button>
                         </td>
