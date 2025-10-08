@@ -66,9 +66,9 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex md:w-56 lg:w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:sticky md:top-0 md:h-screen">
-      <div className="h-16 flex items-center px-4 border-b border-gray-200">
-        <div className="flex items-center gap-2 text-lg font-semibold text-black">
+    <aside className="hidden md:flex md:w-56 lg:w-64 shrink-0 flex-col border-r border-border bg-card md:sticky md:top-0 md:h-screen">
+      <div className="h-16 flex items-center px-4 border-b border-border">
+        <div className="flex items-center gap-2 text-lg font-semibold text-card-foreground">
           <div className="bg-indigo-500 text-white p-1 rounded">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 20V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
@@ -87,8 +87,8 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
                 active
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               }`}
             >
               {item.icon}
@@ -97,8 +97,8 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="mt-auto p-3 border-t border-gray-200">
-        <Link href="/auth/signin" className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+      <div className="mt-auto p-3 border-t border-border">
+        <Link href="/auth/signin" className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>

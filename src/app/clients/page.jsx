@@ -38,32 +38,32 @@ export default function ClientsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="flex">
         <main className="flex-1">
           {/* Navbar is global via AppShell */}
 
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="mb-4">
-              <h1 className="text-xl font-semibold text-gray-900">Clients</h1>
-              <p className="text-sm text-gray-500">Manage your client relationships and information</p>
+              <h1 className="text-xl font-semibold text-foreground">Clients</h1>
+              <p className="text-sm text-muted-foreground">Manage your client relationships and information</p>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-5 py-4 border-b border-gray-200">
+            <div className="bg-card border border-border rounded-xl">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-5 py-4 border-b border-border">
                 <div>
-                  <div className="text-sm font-medium text-gray-800">All Clients</div>
-                  <div className="text-xs text-gray-500">{filtered.length} total clients</div>
+                  <div className="text-sm font-medium text-card-foreground">All Clients</div>
+                  <div className="text-xs text-muted-foreground">{filtered.length} total clients</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black" placeholder="Search clients..." />
-                  <button className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Add Client</button>
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} className="w-64 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring text-foreground" placeholder="Search clients..." />
+                  <button className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Add Client</button>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600">
+                  <thead className="bg-muted text-muted-foreground">
                     <tr>
                       <th className="px-5 py-3 text-left font-medium">Client</th>
                       <th className="px-5 py-3 text-left font-medium">Email</th>
@@ -73,33 +73,33 @@ export default function ClientsPage() {
                       <th className="px-5 py-3 text-left font-medium">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-border">
                     {filtered.map((c, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
+                      <tr key={idx} className="hover:bg-muted/50">
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
                             <Avatar name={c.name} />
-                            <span className="text-gray-900">{c.name}</span>
+                            <span className="text-foreground">{c.name}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-3 text-gray-700">
+                        <td className="px-5 py-3 text-muted-foreground">
                           <span className="inline-flex items-center gap-2">
                             <span>✉️</span>
                             {c.email}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-gray-700">
+                        <td className="px-5 py-3 text-muted-foreground">
                           <span className="inline-flex items-center gap-2">
                             <span>📞</span>
                             {c.phone}
                           </span>
                         </td>
                         <td className="px-5 py-3">
-                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">{c.cases}</span>
+                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted text-muted-foreground text-xs font-medium">{c.cases}</span>
                         </td>
-                        <td className="px-5 py-3 text-gray-500">{c.joined}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{c.joined}</td>
                         <td className="px-5 py-3">
-                          <button className="text-indigo-600 hover:underline">View</button>
+                          <button className="text-primary hover:underline">View</button>
                         </td>
                       </tr>
                     ))}

@@ -4,13 +4,13 @@ import { useMemo } from "react";
 
 function StatCard({ title, value, delta, icon }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4">
-      <div className="h-10 w-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+    <div className="bg-card rounded-xl border border-border p-5 flex items-start gap-4">
+      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
         {icon}
       </div>
       <div className="flex-1">
-        <div className="text-sm text-gray-500">{title}</div>
-        <div className="text-2xl font-semibold">{value}</div>
+        <div className="text-sm text-muted-foreground">{title}</div>
+        <div className="text-2xl font-semibold text-foreground">{value}</div>
         {delta && <div className="text-xs text-emerald-600 mt-1">{delta}</div>}
       </div>
     </div>
@@ -19,14 +19,14 @@ function StatCard({ title, value, delta, icon }) {
 
 function RecentSubmissionsTable({ rows }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-200">
-        <div className="text-sm font-medium text-gray-700">Recent Submissions</div>
-        <div className="text-xs text-gray-500">Latest case updates and new submissions</div>
+    <div className="bg-card rounded-xl border border-border">
+      <div className="px-5 py-4 border-b border-border">
+        <div className="text-sm font-medium text-card-foreground">Recent Submissions</div>
+        <div className="text-xs text-muted-foreground">Latest case updates and new submissions</div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
+          <thead className="bg-muted text-muted-foreground">
             <tr>
               <th className="px-5 py-3 text-left font-medium">Client</th>
               <th className="px-5 py-3 text-left font-medium">Case Type</th>
@@ -35,11 +35,11 @@ function RecentSubmissionsTable({ rows }) {
               <th className="px-5 py-3 text-left font-medium">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-border">
             {rows.map((r, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-5 py-3 text-gray-900">{r.client}</td>
-                <td className="px-5 py-3 text-gray-700">{r.caseType}</td>
+              <tr key={idx} className="hover:bg-muted/50">
+                <td className="px-5 py-3 text-foreground">{r.client}</td>
+                <td className="px-5 py-3 text-muted-foreground">{r.caseType}</td>
                 <td className="px-5 py-3">
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                     r.status === "Completed"
@@ -51,9 +51,9 @@ function RecentSubmissionsTable({ rows }) {
                     {r.status}
                   </span>
                 </td>
-                <td className="px-5 py-3 text-gray-500">{r.updated}</td>
+                <td className="px-5 py-3 text-muted-foreground">{r.updated}</td>
                 <td className="px-5 py-3">
-                  <button className="text-indigo-600 hover:underline flex items-center gap-1">
+                  <button className="text-primary hover:underline flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -73,15 +73,15 @@ function RecentSubmissionsTable({ rows }) {
 function ActivityItem({ title, subtitle, date }) {
   return (
     <div className="flex gap-4">
-      <div className="mt-1 h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+      <div className="mt-1 h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       </div>
       <div className="flex-1">
-        <div className="text-sm text-gray-900">{title}</div>
-        <div className="text-xs text-gray-500">{subtitle}</div>
-        <div className="text-xs text-gray-400 mt-1">{date}</div>
+        <div className="text-sm text-foreground">{title}</div>
+        <div className="text-xs text-muted-foreground">{subtitle}</div>
+        <div className="text-xs text-muted-foreground/70 mt-1">{date}</div>
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="flex">
         {/* Main */}
         <main className="flex-1">
@@ -156,8 +156,8 @@ export default function DashboardPage() {
           {/* Content */}
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="mb-4">
-              <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-              <p className="text-sm text-gray-500">Welcome back! Here's what's happening today.</p>
+              <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Welcome back! Here's what's happening today.</p>
             </div>
 
             {/* Stats */}
@@ -171,9 +171,9 @@ export default function DashboardPage() {
             <RecentSubmissionsTable rows={rows} />
 
             {/* Recent Activity */}
-            <div className="mt-6 bg-white rounded-xl border border-gray-200 p-5">
-              <div className="text-sm font-medium text-gray-700 mb-1">Recent Activity</div>
-              <div className="text-xs text-gray-500 mb-4">Latest updates across all cases</div>
+            <div className="mt-6 bg-card rounded-xl border border-border p-5">
+              <div className="text-sm font-medium text-card-foreground mb-1">Recent Activity</div>
+              <div className="text-xs text-muted-foreground mb-4">Latest updates across all cases</div>
               <div className="grid gap-5">
                 {activities.map((a, i) => (
                   <ActivityItem key={i} title={a.title} subtitle={a.subtitle} date={a.date} />
