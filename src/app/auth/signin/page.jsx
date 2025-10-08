@@ -2,22 +2,55 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../../lib/supabaseClient";
+import { supabase } from "@/utils/supabaseClient";
 
 export default function SigninPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const REQUIRED_ROLE = "admin";
 
   const handleSignin = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
+    setError(""); // Clear previous errors
+
+    // 1. Attempt to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) setError(error.message);
-    else router.push("/dashboard");
+
+    if (signInError) {
+      setError(signInError.message);
+      return;
+    }
+
+    // 2. Sign-in successful, now check the user's role from the JWT
+    // This is asynchronous because it fetches the latest session data.
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setError("Failed to retrieve user session. Please try again.");
+      await supabase.auth.signOut();
+      return;
+    }
+
+    // 3. Extract the custom role from the JWT claims (app_metadata)
+    const userRole = user.app_metadata.user_role;
+
+    if (userRole === REQUIRED_ROLE) {
+      router.push("/dashboard");
+    } else {
+      setError(
+        `Access denied. You must have the '${REQUIRED_ROLE}' role to sign into this application.`
+      );
+
+      await supabase.auth.signOut();
+    }
   };
 
   const handleAdminDemo = async () => {
@@ -63,7 +96,7 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <div className="flex items-center justify-center bg-white py-5">
       <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm">
         {/* Logo / Icon */}
         <div className="flex justify-center mb-6">
@@ -164,27 +197,6 @@ export default function SigninPage() {
           <a href="/auth/signup" className="text-indigo-600 hover:underline">
             Sign up
           </a>
-        </div>
-
-        {/* Quick demo access */}
-        <div className="mt-6">
-          <div className="text-center text-sm text-gray-500 mb-3">Quick demo access:</div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleAdminDemo}
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50 text-black"
-            >
-              Admin Demo
-            </button>
-            <button
-              type="button"
-              onClick={handleClientDemo}
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50 text-black"
-            >
-              Client Demo
-            </button>
-          </div>
         </div>
       </div>
     </div>

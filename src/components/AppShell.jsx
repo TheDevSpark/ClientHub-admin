@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 
@@ -28,7 +28,9 @@ export default function AppShell({ children }) {
 
       // Allow admin demo to bypass auth checks
       try {
-        const demoBypass = typeof window !== "undefined" && window.localStorage.getItem("demo_admin") === "1";
+        const demoBypass =
+          typeof window !== "undefined" &&
+          window.localStorage.getItem("demo_admin") === "1";
         if (demoBypass) {
           if (isMounted) {
             setIsAuthorized(true);
@@ -72,11 +74,7 @@ export default function AppShell({ children }) {
   }, [isAuthRoute, router]);
 
   if (isAuthRoute) {
-    return (
-      <div className="min-h-screen bg-white">
-        {children}
-      </div>
-    );
+    return <div className="min-h-screen bg-white">{children}</div>;
   }
 
   if (isChecking || !isAuthorized) {
@@ -99,5 +97,3 @@ export default function AppShell({ children }) {
     </div>
   );
 }
-
-
