@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../../lib/supabaseClient";
 
 function StatCard({ title, value, delta, icon }) {
   return (
@@ -88,63 +89,75 @@ function ActivityItem({ title, subtitle, date }) {
 }
 
 export default function DashboardPage() {
-  const stats = useMemo(
-    () => [
-      { 
-        title: "Active Cases", 
-        value: 3, 
-        delta: "+ 3 from last week", 
-        icon: (
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [stats, setStats] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [activities, setActivities] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      setLoading(true);
+      setError("");
+      const profilesPromise = supabase.from("profiles").select("id, full_name");
+      const casesPromise = supabase
+        .from("cases")
+        .select('id, created_at, "case-type", status, "case-id"')
+        .order("created_at", { ascending: false })
+        .limit(20);
+      const [{ data: profiles, error: pErr }, { data: cases, error: cErr }] = await Promise.all([
+        profilesPromise,
+        casesPromise,
+      ]);
+      if (!isMounted) return;
+      if (pErr || cErr) {
+        setError((pErr || cErr)?.message || "Failed to load dashboard");
+        setLoading(false);
+        return;
+      }
+      const idToName = new Map((profiles || []).map((p) => [p.id, p.full_name]));
+      const activeCount = (cases || []).filter((c) => c.status === "In Progress").length;
+      const completedCount = (cases || []).filter((c) => c.status === "Completed").length;
+      const uniqueClients = new Set((cases || []).map((c) => c["case-id"]).filter(Boolean)).size;
+
+      setStats([
+        { title: "Active Cases", value: activeCount, delta: "", icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 20V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
             <rect width="20" height="14" x="2" y="6" rx="2" />
           </svg>
-        )
-      },
-      { 
-        title: "Completed Cases", 
-        value: 3, 
-        delta: "+ 2 this month", 
-        icon: (
+        ) },
+        { title: "Completed Cases", value: completedCount, delta: "", icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-        )
-      },
-      { 
-        title: "New Clients", 
-        value: 2, 
-        delta: "This month", 
-        icon: (
+        ) },
+        { title: "Active Clients", value: uniqueClients, delta: "", icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
-        )
-      },
-    ],
-    []
-  );
+        ) },
+      ]);
 
-  const rows = useMemo(
-    () => [
-      { client: "Sarah Johnson", caseType: "Contract Review", status: "In Progress", updated: "10/3/2024" },
-      { client: "Sarah Johnson", caseType: "Property Dispute", status: "Completed", updated: "9/28/2024" },
-      { client: "Michael Chen", caseType: "Business Formation", status: "Pending", updated: "10/1/2024" },
-      { client: "Emily Rodriguez", caseType: "Estate Planning", status: "In Progress", updated: "10/2/2024" },
-      { client: "Emily Rodriguez", caseType: "Immigration Consultation", status: "Completed", updated: "9/15/2024" },
-    ],
-    []
-  );
+      setRows((cases || []).slice(0, 5).map((c) => ({
+        client: idToName.get(c["case-id"]) || "Unknown",
+        caseType: c["case-type"] || "",
+        status: c.status || "",
+        updated: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+      })));
 
-  const activities = useMemo(
-    () => [
-      { title: "Review in progress • Contract Review", subtitle: "Legal team reviewing contract terms", date: "10/3/2024" },
-      { title: "Case resolved • Property Dispute", subtitle: "Settlement agreement reached", date: "9/28/2024" },
-      { title: "Case opened • Business Formation", subtitle: "Awaiting initial documentation", date: "9/28/2024" },
-      { title: "Client review • Estate Planning", subtitle: "", date: "9/25/2024" },
-    ],
-    []
-  );
+      setActivities((cases || []).slice(0, 4).map((c) => ({
+        title: `${c.status || "Updated"} • ${c["case-type"] || "Case"}`,
+        subtitle: idToName.get(c["case-id"]) || "",
+        date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+      })));
+
+      setLoading(false);
+    }
+    load();
+    return () => { isMounted = false; };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -162,8 +175,8 @@ export default function DashboardPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {stats.map((s, i) => (
-                <StatCard key={i} title={s.title} value={s.value} delta={s.delta} icon={s.icon} />
+              {(loading ? [1,2,3] : stats).map((s, i) => (
+                <StatCard key={i} title={s.title || "—"} value={s.value ?? "—"} delta={s.delta} icon={s.icon} />
               ))}
             </div>
 
