@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
 function Avatar({ name }) {
   const initials = name

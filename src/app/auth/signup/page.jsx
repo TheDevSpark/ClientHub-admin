@@ -1,29 +1,9 @@
 "use client";
 
 import { useState } from "react";
-// import { useRouter } from "next/navigation"; // Temporarily commented out to fix compilation error
-
-// --- START: Mock Supabase Client for Compilation ---
-// IMPORTANT: Replace this block with your actual Supabase import:
-// import { supabase } from "@/utils/supabaseClient";
-const supabase = {
-  auth: {
-    signUp: async ({ email, password, options }) => {
-      console.log("--- MOCK SUPABASE SIGNUP ATTEMPT ---");
-      console.log(`Email: ${email}`);
-      console.log(`Password: ${password ? "********" : "N/A"}`);
-      console.log(
-        "User Metadata (Used by DB Trigger for profiles table):",
-        options.data
-      );
-
-      // Simulate success after a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { data: { user: { id: "mock-user-123" } }, error: null };
-    },
-  },
-};
-// --- END: Mock Supabase Client for Compilation ---
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -31,42 +11,27 @@ export default function SignupPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // const router = useRouter(); // Temporarily commented out
-  // Mock router for successful compilation
-  const router = {
-    push: (path) => console.log(`[MOCK ROUTER] Pushing to: ${path}`),
-  };
+  const router = useRouter();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError("");
-    setMessage("");
     setLoading(true);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       setLoading(false);
       return;
     }
 
-    // 1. Send the sign-up request to Supabase.
-    // NOTE ON ROLE: The role management (addup) is handled by a PostgreSQL
-    // trigger in Supabase, which automatically assigns a default role ('client')
-    // when a new user is created in the auth.users table.
-    const { data, error } = await supabase.auth.signUp({
+    const toastId = toast.loading("Creating your account...");
+
+    // 1️⃣ Create user in Supabase Auth
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        // This sets the URL to redirect to after successful email verification.
-        emailRedirectTo: `${
-          typeof window !== "undefined" ? location.origin : "http://localhost"
-        }/auth/signin`,
-        // This metadata is passed to the database where the trigger can read it
-        // to populate the 'profiles' table with the new user's name/phone.
+        emailRedirectTo: `${location.origin}/auth/signin`,
         data: {
           full_name: name,
           phone_number: phone,
@@ -74,27 +39,54 @@ export default function SignupPage() {
       },
     });
 
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage(
-        "✅ Sign up successful! Please check your email inbox to verify your account before signing in."
-      );
-      // Optionally clear form
-      setName("");
-      setEmail("");
-      setPhone("");
-      setPassword("");
-      setConfirmPassword("");
+    if (signUpError) {
+      toast.dismiss(toastId);
+      toast.error(signUpError.message);
+      setLoading(false);
+      return;
     }
+
+    // 2️⃣ Insert profile record if user was created successfully
+    const user = data?.user;
+    if (user) {
+      const { error: insertError } = await supabase.from("profiles").insert([
+        {
+          id: user.id,
+          full_name: name,
+          phone_number: phone,
+          role: "admin",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Error inserting profile:", insertError.message);
+        toast.dismiss(toastId);
+        toast.error("Failed to save profile details.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 3️⃣ Reset form + show success toast
+    setName("");
+    setEmail("");
+    setPhone("");
+    setPassword("");
+    setConfirmPassword("");
+    toast.dismiss(toastId);
+    toast.success(
+      "✅ Sign up successful! Check your email to verify your account."
+    );
+
+    setLoading(false);
+    setTimeout(() => router.push("/auth/signin"), 1500);
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 py-10">
+      <Toaster position="top-center" />
       <div className="bg-white shadow-xl border border-gray-100 rounded-2xl p-8 w-full max-w-sm transform transition duration-300 hover:shadow-2xl">
-        {/* Logo / Icon */}
         <div className="flex justify-center mb-6">
           <div className="bg-indigo-600 text-white p-4 rounded-full shadow-lg">
             <svg
@@ -115,15 +107,13 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* Heading */}
         <h2 className="text-center text-2xl font-bold mb-2 text-gray-900">
-          Create Client Account
+          Create Admin Account
         </h2>
         <p className="text-center text-gray-500 mb-6">
-          Sign up to your dedicated ClientHub account
+          Sign up to access your admin dashboard
         </p>
 
-        {/* Form */}
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
             <label
@@ -136,7 +126,7 @@ export default function SignupPage() {
               id="name"
               type="text"
               placeholder="John Doe"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-indigo-100 bg-white text-gray-900"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -154,7 +144,7 @@ export default function SignupPage() {
               id="email"
               type="email"
               placeholder="you@example.com"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-indigo-100 bg-white text-gray-900"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -171,8 +161,8 @@ export default function SignupPage() {
             <input
               id="phone"
               type="tel"
-              placeholder="+92 300 1234567"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
+              placeholder="+92 XXX XXXX"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-indigo-100 bg-white text-gray-900"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -189,7 +179,7 @@ export default function SignupPage() {
               id="password"
               type="password"
               placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-indigo-100 bg-white text-gray-900"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -207,7 +197,7 @@ export default function SignupPage() {
               id="confirmPassword"
               type="password"
               placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-indigo-100 bg-white text-gray-900"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -223,19 +213,6 @@ export default function SignupPage() {
           </button>
         </form>
 
-        {/* Messages */}
-        {error && (
-          <p className="bg-red-50 text-red-700 text-sm mt-6 p-3 rounded-xl border border-red-200">
-            {error}
-          </p>
-        )}
-        {message && (
-          <p className="bg-green-50 text-green-700 text-sm mt-6 p-3 rounded-xl border border-green-200">
-            {message}
-          </p>
-        )}
-
-        {/* Footer */}
         <div className="mt-6 text-center text-gray-600 text-sm">
           Already have an account?{" "}
           <a href="/auth/signin" className="text-indigo-600 hover:underline">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../utils/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
 function StatCard({ title, value, delta, icon }) {
   return (
@@ -20,7 +20,7 @@ function StatCard({ title, value, delta, icon }) {
 
 function RecentSubmissionsTable({ rows }) {
   return (
-    <div className="bg-card rounded-xl border border-border">
+    <div className="bg-card rounded-xl border border-border w-[70%] ">
       <div className="px-5 py-4 border-b border-border">
         <div className="text-sm font-medium text-card-foreground">
           Recent Submissions

@@ -1,37 +1,29 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../utils/supabaseClient";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext"; // adjust the path if needed
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
+  const { user } = useAuth();
 
   useEffect(() => {
-    let isMounted = true;
-    async function decideLanding() {
-      const { data } = await supabase.auth.getSession();
-      const session = data?.session || null;
-      if (!session) {
-        router.replace("/auth/signin");
-        return;
-      }
-      const user = session.user;
-      const role =
-        (user?.user_metadata && user.user_metadata.role) ||
-        (user?.app_metadata && user.app_metadata.role) ||
-        null;
-      if (role === "admin") {
+    if (user === undefined) return; // still loading context
+
+    if (user) {
+      // logged in — redirect to dashboard if accessing signin/signup
+      if (pathname === "/signin" || pathname === "/signup") {
         router.replace("/dashboard");
-      } else {
+      }
+    } else {
+      // not logged in — redirect to signin if on a protected page
+      if (pathname !== "/signin" && pathname !== "/signup") {
         router.replace("/auth/signin");
       }
     }
-    decideLanding();
-    return () => {
-      isMounted = false;
-    };
-  }, [router]);
+  }, [user, pathname, router]);
 
   return (
     <main className="flex min-h-screen items-center justify-center">

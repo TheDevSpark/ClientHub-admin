@@ -2,110 +2,80 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
+import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SigninPage() {
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const REQUIRED_ROLE = "admin";
 
   const handleSignin = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setLoading(true);
+    toast.dismiss();
 
-    // 1. Attempt to sign in
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // 1️⃣ Sign in user
+    const { data: signInData, error: signInError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (signInError) {
-      setError(signInError.message);
+      toast.error(signInError.message);
+      setLoading(false);
       return;
     }
 
-    // 2. Sign-in successful, now check the user's role from the JWT
-    // This is asynchronous because it fetches the latest session data.
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const user = signInData?.user;
+    if (!user) {
+      toast.error("Sign in failed. Please try again.");
+      setLoading(false);
+      return;
+    }
 
-    if (userError || !user) {
-      setError("Failed to retrieve user session. Please try again.");
+    // 2️⃣ Fetch user profile to check role
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      toast.error(`Could not fetch user profile: ${error.message}`);
       await supabase.auth.signOut();
+      setLoading(false);
       return;
     }
 
-    // 3. Extract the custom role from the JWT claims (app_metadata)
-    const userRole = user.app_metadata.user_role;
-
-    if (userRole === REQUIRED_ROLE) {
-      router.push("/dashboard");
+    // 3️⃣ Check role and redirect
+    if (data) {
+      console.log(user);
+      toast.success("Welcome back!");
+      setTimeout(() => router.push("/dashboard"), 800);
     } else {
-      setError(
-        `Access denied. You must have the '${REQUIRED_ROLE}' role to sign into this application.`
-      );
-
-      await supabase.auth.signOut();
+      console.log(data);
+      toast.error("Access denied — only admins can log in.");
+      // await supabase.auth.signOut();
     }
-  };
 
-  const handleAdminDemo = async () => {
-    setError("");
-    try {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("demo_admin", "1");
-      }
-    } catch (_) {}
-    // Bypass auth entirely for demo and go straight to dashboard
-    router.push("/dashboard");
-  };
-
-  const handleClientDemo = async () => {
-    const demoEmail = process.env.NEXT_PUBLIC_DEMO_CLIENT_EMAIL;
-    const demoPassword = process.env.NEXT_PUBLIC_DEMO_CLIENT_PASSWORD;
-    if (!demoEmail || !demoPassword) {
-      setError("Demo client credentials are not configured.");
-      return;
-    }
-    setError("");
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    try {
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem("demo_admin");
-      }
-    } catch (_) {}
-    const { error } = await supabase.auth.signInWithPassword({
-      email: demoEmail,
-      password: demoPassword,
-    });
-    if (error) setError(error.message);
-    else router.replace("/auth/signin");
-  };
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
+    setLoading(false);
   };
 
   return (
-    <div className="flex items-center justify-center bg-white py-5">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm">
-        {/* Logo / Icon */}
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 py-10">
+      <div className="bg-white shadow-xl border border-gray-100 rounded-2xl p-8 w-full max-w-sm">
         <div className="flex justify-center mb-6">
-          <div className="bg-indigo-500 text-white p-4 rounded-full">
+          <div className="bg-indigo-600 text-white p-4 rounded-full shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
               height="24"
-              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -119,17 +89,14 @@ export default function SigninPage() {
           </div>
         </div>
 
-        {/* Heading */}
-        <h2 className="text-center text-2xl font-semibold mb-2 text-black">
+        <h2 className="text-center text-2xl font-bold mb-2 text-gray-900">
           Welcome back
         </h2>
         <p className="text-center text-gray-500 mb-6">
           Sign in to your ClientHub account
         </p>
 
-        {/* Form */}
         <form onSubmit={handleSignin} className="space-y-4">
-          {/* Email */}
           <div>
             <label
               htmlFor="email"
@@ -141,14 +108,13 @@ export default function SigninPage() {
               id="email"
               type="email"
               placeholder="you@example.com"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black bg-white placeholder-gray-400 dark:bg-white dark:text-black dark:placeholder-gray-400"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
               value={email}
-              onChange={handleEmailChange}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-          {/* Password */}
           <div>
             <label
               htmlFor="password"
@@ -160,9 +126,9 @@ export default function SigninPage() {
               id="password"
               type="password"
               placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black bg-white placeholder-gray-400 dark:bg-white dark:text-black dark:placeholder-gray-400"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-4 focus:ring-indigo-100 text-gray-900 transition bg-white"
               value={password}
-              onChange={handlePasswordChange}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
             <div className="text-right text-sm mt-1">
@@ -172,27 +138,16 @@ export default function SigninPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl shadow-md hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            Sign In
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
-        {/* Error */}
-        {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="h-px bg-gray-200 flex-1" />
-          <span className="text-xs text-gray-400">or</span>
-          <div className="h-px bg-gray-200 flex-1" />
-        </div>
-
-        {/* Sign up link */}
-        <div className="text-center text-gray-600 text-sm">
+        <div className="mt-6 text-center text-gray-600 text-sm">
           Don&apos;t have an account?{" "}
           <a href="/auth/signup" className="text-indigo-600 hover:underline">
             Sign up
