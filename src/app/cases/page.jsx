@@ -449,9 +449,7 @@ export default function CasesPage() {
                 <table className="min-w-full text-sm">
                   <thead className="bg-muted text-muted-foreground">
                     <tr>
-                      <th className="px-5 py-3 text-left font-medium">
-                        Case ID
-                      </th>
+                      <th className="px-5 py-3 text-left font-medium">S No.</th>
                       <th className="px-5 py-3 text-left font-medium">Name</th>
                       <th className="px-5 py-3 text-left font-medium">
                         Description
@@ -488,7 +486,7 @@ export default function CasesPage() {
                       filtered.map((c, idx) => (
                         <tr key={idx} className="hover:bg-muted/50">
                           <td className="px-5 py-3 text-foreground">
-                            #{String(c.id).padStart(4, "0")}
+                            {idx + 1}
                           </td>
                           <td className="px-5 py-3 text-foreground">
                             {c.name}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import Link from "next/link";
 
 function StatCard({ title, value, delta, icon }) {
   return (
@@ -26,7 +27,7 @@ function RecentSubmissionsTable({ rows }) {
           Recent Submissions
         </div>
         <div className="text-xs text-muted-foreground">
-          Latest case updates and new submissions
+          Latest case updates from the last 3 days
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -36,7 +37,7 @@ function RecentSubmissionsTable({ rows }) {
               <th className="px-5 py-3 text-left font-medium">Client</th>
               <th className="px-5 py-3 text-left font-medium">Case Type</th>
               <th className="px-5 py-3 text-left font-medium">Status</th>
-              <th className="px-5 py-3 text-left font-medium">Last Updated</th>
+              <th className="px-5 py-3 text-left font-medium">Created</th>
               <th className="px-5 py-3 text-left font-medium">Actions</th>
             </tr>
           </thead>
@@ -60,9 +61,12 @@ function RecentSubmissionsTable({ rows }) {
                     {r.status}
                   </span>
                 </td>
-                <td className="px-5 py-3 text-muted-foreground">{r.updated}</td>
+                <td className="px-5 py-3 text-muted-foreground">{r.created}</td>
                 <td className="px-5 py-3">
-                  <button className="text-primary hover:underline flex items-center gap-1">
+                  <Link
+                    className="text-primary hover:underline flex items-center gap-1"
+                    href={"/cases"}
+                  >
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -83,7 +87,7 @@ function RecentSubmissionsTable({ rows }) {
                       />
                     </svg>
                     View
-                  </button>
+                  </Link>
                 </td>
               </tr>
             ))}
@@ -133,23 +137,34 @@ export default function DashboardPage() {
     async function load() {
       setLoading(true);
       setError("");
+
+      // Get date 3 days ago
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 30);
+
       const profilesPromise = supabase.from("profiles").select("id, full_name");
       const casesPromise = supabase
         .from("cases")
-        .select('id, created_at, "case-type", status, "case-id"')
-        .order("created_at", { ascending: false })
-        .limit(20);
+        .select('user_id, created_at, "type", status, "case_id"')
+        .gte("created_at", threeDaysAgo.toISOString()) // ✅ only last 3 days
+        .order("created_at", { ascending: false });
+
       const [{ data: profiles, error: pErr }, { data: cases, error: cErr }] =
         await Promise.all([profilesPromise, casesPromise]);
+
       if (!isMounted) return;
       if (pErr || cErr) {
         setError((pErr || cErr)?.message || "Failed to load dashboard");
         setLoading(false);
         return;
       }
+
       const idToName = new Map(
         (profiles || []).map((p) => [p.id, p.full_name])
       );
+
+      console.log(idToName);
+
       const activeCount = (cases || []).filter(
         (c) => c.status === "In Progress"
       ).length;
@@ -157,14 +172,13 @@ export default function DashboardPage() {
         (c) => c.status === "Completed"
       ).length;
       const uniqueClients = new Set(
-        (cases || []).map((c) => c["case-id"]).filter(Boolean)
+        (cases || []).map((c) => c["case_id"]).filter(Boolean)
       ).size;
 
       setStats([
         {
           title: "Active Cases",
           value: activeCount,
-          delta: "",
           icon: (
             <svg
               className="w-6 h-6"
@@ -185,7 +199,6 @@ export default function DashboardPage() {
         {
           title: "Completed Cases",
           value: completedCount,
-          delta: "",
           icon: (
             <svg
               className="w-6 h-6"
@@ -205,7 +218,6 @@ export default function DashboardPage() {
         {
           title: "Active Clients",
           value: uniqueClients,
-          delta: "",
           icon: (
             <svg
               className="w-6 h-6"
@@ -226,10 +238,10 @@ export default function DashboardPage() {
 
       setRows(
         (cases || []).slice(0, 5).map((c) => ({
-          client: idToName.get(c["case-id"]) || "Unknown",
-          caseType: c["case-type"] || "",
+          client: idToName.get(c["user_id"]) || "Unknown",
+          caseType: c["type"] || "",
           status: c.status || "",
-          updated: c.created_at
+          created: c.created_at
             ? new Date(c.created_at).toLocaleDateString()
             : "",
         }))
@@ -237,8 +249,8 @@ export default function DashboardPage() {
 
       setActivities(
         (cases || []).slice(0, 4).map((c) => ({
-          title: `${c.status || "Updated"} • ${c["case-type"] || "Case"}`,
-          subtitle: idToName.get(c["case-id"]) || "",
+          title: `${c.status || "Updated"} • ${c["type"] || "Case"}`,
+          subtitle: idToName.get(c["case_id"]) || "",
           date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
         }))
       );
@@ -254,38 +266,30 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        {/* Main */}
         <main className="flex-1">
-          {/* Navbar is global via AppShell */}
-
-          {/* Content */}
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="mb-4">
               <h1 className="text-xl font-semibold text-foreground">
                 Dashboard
               </h1>
               <p className="text-sm text-muted-foreground">
-                Welcome back! Here's what's happening today.
+                Showing data from the last 3 days.
               </p>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               {(loading ? [1, 2, 3] : stats).map((s, i) => (
                 <StatCard
                   key={i}
                   title={s.title || "—"}
                   value={s.value ?? "—"}
-                  delta={s.delta}
                   icon={s.icon}
                 />
               ))}
             </div>
 
-            {/* Recent Submissions */}
             <RecentSubmissionsTable rows={rows} />
 
-            {/* Recent Activity */}
             <div className="mt-6 bg-card rounded-xl border border-border p-5">
               <div className="text-sm font-medium text-card-foreground mb-1">
                 Recent Activity

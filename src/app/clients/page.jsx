@@ -24,63 +24,61 @@ export default function ClientsPage() {
   const [clients, setClients] = useState([]);
 
   useEffect(() => {
-  let isMounted = true;
+    let isMounted = true;
 
-  async function load() {
-    setLoading(true);
-    setError("");
+    async function load() {
+      setLoading(true);
+      setError("");
 
-    // Step 1: Fetch all client profiles
-    const { data: profiles, error: pErr } = await supabase
-      .from("profiles")
-      .select("id, full_name, role, phone_number, created_at")
-      .eq("role", "client");
+      // Step 1: Fetch all client profiles
+      const { data: profiles, error: pErr } = await supabase
+        .from("profiles")
+        .select("id, full_name, role, phone_number, created_at")
+        .eq("role", "client");
 
-    if (pErr) {
-      setError(pErr?.message || "Failed to load clients");
-      setLoading(false);
-      return;
+      if (pErr) {
+        setError(pErr?.message || "Failed to load clients");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch all cases (we’ll group manually)
+      const { data: cases, error: cErr } = await supabase
+        .from("cases")
+        .select("user_id");
+
+      if (cErr) {
+        console.error(cErr);
+      }
+
+      // Step 3: Count how many cases per user_id
+      const counts = new Map();
+      (cases || []).forEach((c) => {
+        counts.set(c.user_id, (counts.get(c.user_id) || 0) + 1);
+      });
+
+      // Step 4: Merge with client data
+      const normalized = (profiles || []).map((p) => ({
+        id: p.id,
+        name: p.full_name || "Unnamed",
+        email: "",
+        phone: p.phone_number || "",
+        role: p.role || "",
+        cases: counts.get(p.id) || 0,
+        joined: p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
+      }));
+
+      if (isMounted) {
+        setClients(normalized);
+        setLoading(false);
+      }
     }
 
-    // Step 2: Fetch all cases (we’ll group manually)
-    const { data: cases, error: cErr } = await supabase
-      .from("cases")
-      .select("user_id");
-
-    if (cErr) {
-      console.error(cErr);
-    }
-
-    // Step 3: Count how many cases per user_id
-    const counts = new Map();
-    (cases || []).forEach((c) => {
-      counts.set(c.user_id, (counts.get(c.user_id) || 0) + 1);
-    });
-
-    // Step 4: Merge with client data
-    const normalized = (profiles || []).map((p) => ({
-      id: p.id,
-      name: p.full_name || "Unnamed",
-      email: "",
-      phone: p.phone_number || "",
-      role: p.role || "",
-      cases: counts.get(p.id) || 0,
-      joined: p.created_at
-        ? new Date(p.created_at).toLocaleDateString()
-        : "",
-    }));
-
-    if (isMounted) {
-      setClients(normalized);
-      setLoading(false);
-    }
-  }
-
-  load();
-  return () => {
-    isMounted = false;
-  };
-}, []);
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filtered = clients.filter(
     (c) =>
@@ -137,9 +135,6 @@ export default function ClientsPage() {
                       <th className="px-5 py-3 text-left font-medium">
                         Joined Date
                       </th>
-                      <th className="px-5 py-3 text-left font-medium">
-                        Actions
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -167,7 +162,7 @@ export default function ClientsPage() {
                               <span className="text-foreground">{c.name}</span>
                             </div>
                           </td>
-                         
+
                           <td className="px-5 py-3 text-muted-foreground">
                             <span className="inline-flex items-center gap-2">
                               <span>📞</span>
@@ -181,11 +176,6 @@ export default function ClientsPage() {
                           </td>
                           <td className="px-5 py-3 text-muted-foreground">
                             {c.joined || "—"}
-                          </td>
-                          <td className="px-5 py-3">
-                            <button className="text-primary hover:underline">
-                              View
-                            </button>
                           </td>
                         </tr>
                       ))
